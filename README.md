@@ -13,6 +13,7 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 
 | 경로 | 내용 |
 |---|---|
+| [`deck/`](deck/) | **설계·결과 장표** PPTX, YAML 원본, 한국어 발표 노트, 슬라이드별 PNG |
 | [실행 안내](docs/runbook.md) | 로컬 검증, Azure 미리보기·배포, Fabric 구성, 로그 대조와 정리 |
 | [실측 증적](evidence/README.md) | 실제 실행 3건의 결과와 마지막 정리 확인. 원본 로그와 실제 IP·식별자는 제외 |
 | [설계](docs/superpowers/specs/2026-11-20-fabric-vnet-gateway-nat-poc-design.md) · [구현 계획](docs/superpowers/plans/2026-11-20-fabric-vnet-gateway-nat-poc.md) | 검증 범위, 접근 정책과 단계별 판정 기준 |
@@ -20,27 +21,25 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 | [`mock-api/`](mock-api/) | 합성 JSON만 반환하는 Node.js Mock API와 HTTP 테스트 |
 | [`scripts/`](scripts/) · [`tests/`](tests/) | 실측 증거 판정기, 인프라 구조 및 판정 회귀 테스트 |
 
-## 검증 구성
+## 장표
 
-```mermaid
-flowchart LR
-    P["Fabric Pipeline · REST Copy Activity"]
-    L["Fabric Lakehouse"]
-    subgraph V["Azure VNet · 전용 위임 서브넷"]
-        G["VNet Data Gateway"]
-    end
-    N["Azure NAT Gateway · 정적 공인 IPv4"]
-    A["App Service · 공개 HTTPS Mock API"]
-    E["NAT를 사용하지 않는 IPv4 클라이언트"]
-    W["Log Analytics · HTTP / IP 감사 로그"]
+[편집 가능한 PowerPoint v1](deck/fabric-nat-design-v1.pptx) · [YAML 원본](deck/fabric-nat-design-v1.yaml) · [발표 노트](deck/fabric-nat-design-v1.script.md) · [전체 미리보기](deck/fabric-nat-design-v1_render/contact_sheet.png)
 
-    P --> G --> N -->|NAT IPv4 /32| A
-    P -->|응답 적재| L
-    E -->|같은 URL · 403| A
-    A -->|플랫폼 수신 로그| W
-```
+7장입니다. 검증 구성을 먼저 보여 주고, `01 네트워크 검증`에서 검증 매트릭스와 실측을, `02 재현 및 정리`에서 설정과 남은 한계를 다룹니다. 이미지를 클릭하면 원본 크기로 열립니다.
 
-App Service는 NAT IPv4 `/32`만 허용합니다. 수신 IP는 Mock 응답이나 `X-Forwarded-For`가 아니라 App Service 플랫폼 로그의 `CIp`로 판정했습니다.
+### 검증 샘플 구성
+
+<a href="deck/fabric-nat-design-v1_render/slide_01.png"><img src="deck/fabric-nat-design-v1_render/slide_01.png" alt="Fabric Pipeline에서 App Service까지의 NAT 허용 경로와 차단 대조군" width="960"></a>
+
+### 01 네트워크 검증
+
+[섹션](deck/fabric-nat-design-v1_render/slide_02.png) · [검증 매트릭스](deck/fabric-nat-design-v1_render/slide_03.png)
+
+<a href="deck/fabric-nat-design-v1_render/slide_04.png"><img src="deck/fabric-nat-design-v1_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
+
+### 02 재현 및 정리
+
+[섹션](deck/fabric-nat-design-v1_render/slide_05.png) · [Fabric 재현 설정](deck/fabric-nat-design-v1_render/slide_06.png) · [검증 범위와 리소스 정리 상태](deck/fabric-nat-design-v1_render/slide_07.png)
 
 ## 재현 순서
 

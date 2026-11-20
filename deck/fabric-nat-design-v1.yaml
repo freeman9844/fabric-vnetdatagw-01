@@ -1,0 +1,274 @@
+deck:
+  title: "Fabric VNet Data Gateway · NAT Gateway 검증 — 설계와 결과"
+  level: L300
+  mode: fit
+  target_slides: 7
+  theme: light
+  brand: none
+  slide_numbers: true
+  topic_marker: false
+  coverage: ["네트워크 검증", "재현 및 정리"]
+  footer: "Fabric NAT Gateway PoC · 설계와 결과 v1 · 2026-11-20 · West US 3 · 기능 검증용"
+slides:
+  - layout: content
+    title: "검증 샘플 구성 — Fabric의 고정 송신 IP"
+    title_size: 26
+    archetype: architecture
+    blocks:
+      - type: shapes
+        id: topology
+        box: [40, 112, 1200, 532]
+        items:
+          - {kind: round, name: fabric-frame, x: 8, y: 38, w: 246, h: 342, fill: "FFFFFF", line: "008577", dash: true, radius: 6}
+          - {kind: text, name: fabric-title, x: 23, y: 52, w: 215, h: 26, text: "Microsoft Fabric · SaaS", size: 15, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: fabric-capacity, x: 23, y: 83, w: 215, h: 23, text: "Trial · 전용 작업 영역", size: 11, color: "444444", align: left}
+          - {kind: round, name: vnet-frame, x: 299, y: 38, w: 320, h: 264, fill: "FFFFFF", line: "1F4E79", radius: 6}
+          - {kind: text, name: vnet-title, x: 315, y: 52, w: 288, h: 26, text: "Azure VNet · 10.20.30.0/24", size: 15, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: subnet-frame, x: 313, y: 95, w: 292, h: 189, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: subnet-title, x: 326, y: 102, w: 264, h: 25, text: "위임 서브넷 · 10.20.30.0/27", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: text, name: subnet-delegation, x: 325, y: 251, w: 267, h: 23, text: "vnetaccesslinks 위임", size: 11, color: "444444", align: left}
+          - {kind: line, name: azure-rule, x: 670, y: 92, x2: 1192, y2: 92, line: "FF8C00", line_w: 2}
+          - {kind: text, name: azure-title, x: 670, y: 53, w: 522, h: 31, text: "Azure West US 3 · 공개 HTTPS", size: 15, bold: true, color: "1F4E79", align: left}
+
+          - {kind: round, name: pipeline, x: 23, y: 132, w: 211, h: 103, fill: "E6F4F1", line: "008577", radius: 6}
+          - {kind: text, name: pipeline-title, x: 35, y: 144, w: 187, h: 25, text: "Fabric Pipeline", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: pipeline-body, x: 35, y: 175, w: 187, h: 51, text: "REST Copy Activity\nGET /probe/{실행 ID}", size: 12, color: "444444", align: left}
+          - {kind: round, name: gateway, x: 335, y: 132, w: 248, h: 103, fill: "EEF3FB", line: "1F4E79", radius: 6}
+          - {kind: text, name: gateway-title, x: 348, y: 144, w: 222, h: 25, text: "VNet Data Gateway", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: gateway-body, x: 348, y: 175, w: 224, h: 51, text: "단일 멤버 · 위임 서브넷 사용\n기본 아웃바운드 비활성화", size: 12, color: "444444", align: left}
+          - {kind: round, name: nat, x: 670, y: 132, w: 237, h: 103, fill: "FFF4E5", line: "FF8C00", radius: 6}
+          - {kind: text, name: nat-title, x: 684, y: 144, w: 210, h: 25, text: "NAT Gateway", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: nat-body, x: 684, y: 175, w: 210, h: 51, text: "서브넷에 연결 · Standard\n정적 공인 IPv4 1개로 SNAT", size: 12, color: "444444", align: left}
+          - {kind: round, name: app, x: 970, y: 132, w: 222, h: 103, fill: "EAF6EC", line: "2E7D32", radius: 6}
+          - {kind: text, name: app-title, x: 982, y: 144, w: 198, h: 25, text: "App Service", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: app-body, x: 982, y: 175, w: 198, h: 51, text: "Mock API · HTTPS 443\nNAT IPv4 /32만 허용", size: 12, color: "444444", align: left}
+
+          - {kind: arrow, name: pipeline-to-gw, x: 234, y: 184, x2: 335, y2: 184, line: "2E7D32", line_w: 2.5}
+          - {kind: text, name: connection-label, x: 257, y: 148, w: 40, h: 23, text: "REST", size: 11, bold: true, color: "2E7D32", align: center}
+          - {kind: arrow, name: gateway-to-nat, x: 583, y: 184, x2: 670, y2: 184, line: "2E7D32", line_w: 2.5}
+          - {kind: text, name: https-label, x: 620, y: 148, w: 49, h: 23, text: "HTTPS", size: 11, bold: true, color: "2E7D32", align: center}
+          - {kind: arrow, name: nat-to-app, x: 907, y: 184, x2: 970, y2: 184, line: "2E7D32", line_w: 2.5}
+          - {kind: text, name: cidr-label, x: 912, y: 148, w: 53, h: 23, text: "/32", size: 11, bold: true, color: "2E7D32", align: center}
+
+          - {kind: round, name: lakehouse, x: 23, y: 299, w: 211, h: 65, fill: "F7FAFB", line: "008577", radius: 6}
+          - {kind: text, name: lakehouse-text, x: 35, y: 308, w: 187, h: 47, text: "Lakehouse\n실행별 합성 JSON 적재", size: 12, color: "171717", align: left}
+          - {kind: arrow, name: pipeline-to-lakehouse, x: 129, y: 235, x2: 129, y2: 299, line: "008577", line_w: 2}
+          - {kind: text, name: write-label, x: 145, y: 249, w: 95, h: 23, text: "응답 적재", size: 11, color: "006B5C", align: left}
+          - {kind: round, name: other-ip, x: 670, y: 322, w: 237, h: 79, fill: "FDECEA", line: "C62828", radius: 6}
+          - {kind: text, name: other-ip-text, x: 684, y: 334, w: 210, h: 55, text: "외부 IPv4 클라이언트\n대조군 · NAT 미사용", size: 12, color: "8B2323", align: left}
+          - {kind: line, name: denied-horizontal, x: 907, y: 359, x2: 1014, y2: 359, line: "C62828", line_w: 2.5, dash: true}
+          - {kind: arrow, name: denied-to-app, x: 1014, y: 359, x2: 1014, y2: 235, line: "C62828", line_w: 2.5, dash: true}
+          - {kind: text, name: denied-label, x: 913, y: 371, w: 118, h: 22, text: "동일 URL · 403", size: 11, bold: true, color: "8B2323", align: left}
+          - {kind: round, name: logs, x: 1038, y: 322, w: 154, h: 79, fill: "F3EEFB", line: "7B61FF", radius: 6}
+          - {kind: text, name: logs-text, x: 1048, y: 334, w: 134, h: 55, text: "Log Analytics\nHTTP · IP 감사", size: 12, color: "3D3760", align: left}
+          - {kind: arrow, name: app-to-logs, x: 1115, y: 235, x2: 1115, y2: 322, line: "666666", line_w: 2}
+
+          - {kind: line, name: legend-allow-line, x: 10, y: 453, x2: 53, y2: 453, line: "2E7D32", line_w: 2.5}
+          - {kind: text, name: legend-allow-text, x: 65, y: 441, w: 212, h: 25, text: "허용 요청 · 200", size: 12, color: "444444", align: left}
+          - {kind: line, name: legend-deny-line, x: 297, y: 453, x2: 340, y2: 453, line: "C62828", line_w: 2.5, dash: true}
+          - {kind: text, name: legend-deny-text, x: 352, y: 441, w: 230, h: 25, text: "비허용 출발지 · 403", size: 12, color: "444444", align: left}
+          - {kind: text, name: legend-scope, x: 10, y: 488, w: 1180, h: 29, text: "범위: 공개 HTTPS 수신 IP·접근 정책 (온프레미스·성능 제외)", size: 12, color: "444444", align: left}
+    source: "Microsoft Learn — https://learn.microsoft.com/data-integration/vnet/data-gateway-architecture ; https://learn.microsoft.com/azure/nat-gateway/nat-overview"
+    notes: |
+      안녕하세요. 오늘은 Fabric Pipeline이 외부 HTTPS API를 호출할 때 목적지에서 보는 출발지 주소를 고정할 수 있는지 살펴볼게요. 실제 Azure West US 3에서 작은 구성으로 두 가지를 확인했습니다. 첫째, 정적 공인 IPv4가 수신 로그에 남는지입니다. 둘째, 다른 출발지는 같은 주소에서 거부되는지입니다.
+
+      왼쪽의 Fabric은 고객 VNet 밖에 있는 SaaS입니다. 기존 Trial에 만든 전용 작업 영역에서 REST Copy Activity를 실행했어요. 연결을 지정하면 VNet Data Gateway가 Microsoft.PowerPlatform/vnetaccesslinks로 위임된 서브넷에서 HTTPS 요청을 보냅니다. 서브넷에 연결한 Standard NAT Gateway가 정적 공인 IPv4 한 개로 출발지 주소를 바꿔 주죠. NAT Gateway를 서브넷 안의 VM처럼 따로 설치하는 구성은 아닙니다.
+
+      오른쪽의 App Service는 공개 HTTPS 엔드포인트지만 지정된 NAT 주소만 허용합니다. 응답은 Fabric이 Lakehouse에 적재했고, 요청 수신과 정책 판단은 Log Analytics에서 대조했어요. 빨간 점선은 같은 URL을 호출하되 NAT를 사용하지 않는 대조군입니다. 이 결과만으로 온프레미스 연결이나 처리 성능까지 판단할 수는 없어요. 이제 네트워크 검증에서 어떤 자료를 맞춰 봤는지 순서대로 보겠습니다.
+
+  - layout: section
+    section_no: "01"
+    title: "네트워크 검증"
+    subtitle: "고정 송신 IPv4 · /32 접근 제한 · 동일 URL 대조군"
+    notes: |
+      앞에서 요청 경로와 정책의 위치를 봤습니다. 이제 네트워크 검증을 보겠습니다. Fabric에서 두 번 요청했고, 그중 먼저 성공한 URL을 외부에서 다시 호출했어요. 응답 코드뿐 아니라 수신 IP와 감사 판정이 함께 맞아야 통과입니다. 먼저 검증 매트릭스에서 각 경우에 어떤 증거를 요구했는지 보겠습니다.
+
+  - layout: content
+    title: "검증 매트릭스 — 허용 2회와 차단 대조군"
+    title_size: 26
+    archetype: comparison-table
+    covers: ["네트워크 검증"]
+    blocks:
+      - type: table
+        id: matrix
+        box: [48, 112, 1184, 272]
+        columns: ["ID", "출발지", "HTTPS 요청", "기대 응답", "판정 근거"]
+        col_widths: [0.07, 0.20, 0.20, 0.15, 0.38]
+        row_h: 70
+        size: 14
+        header_fill: "0078D4"
+        align: [center, left, left, center, left]
+        rows:
+          - ["01", "Fabric 실행 1", "GET /probe/{실행 1}", "200", "Lakehouse 일치 · 수신 IP = NAT IPv4 · Allowed"]
+          - ["02", "Fabric 실행 2", "GET /probe/{실행 2}", "200", "Lakehouse 일치 · 수신 IP = NAT IPv4 · Allowed"]
+          - ["03", "NAT 미사용 IPv4", "01과 같은 URL", "403", "감사 로그의 Denied · 출발지 ≠ NAT IPv4"]
+      - type: cards
+        id: correlation
+        box: [48, 407, 1184, 160]
+        columns: 3
+        style: accent-top
+        title_size: 15
+        body_size: 13
+        items:
+          - {title: "호스트", body: "동일한 App Service 호스트에서 대조", color: "0078D4"}
+          - {title: "경로", body: "실행별 고유 경로로 HTTP 로그를 찾고, 대조군은 01의 URL을 재사용합니다.", color: "0078D4"}
+          - {title: "시간창", body: "겹치지 않는 UTC 관측 구간 3개", color: "0078D4"}
+      - type: callout
+        id: platform-evidence
+        box: [48, 586, 1184, 66]
+        style: bar
+        size: 14
+        text: "판정에는 플랫폼 수신 IP(CIp)를 사용합니다. 호출자가 넣은 X-Forwarded-For는 증거가 아닙니다."
+    notes: |
+      방금 말한 네트워크 검증을 표로 펼쳐 봤습니다. 첫 두 줄은 같은 Pipeline에서 별도로 실행한 작업이에요. 각 실행에는 고유한 프로브 경로를 부여했기 때문에 HTTP 로그에서 어떤 요청이 어느 실행인지 구분할 수 있습니다. 둘 다 완료돼 응답이 Lakehouse에 적재되어야 하고, 경로에 해당하는 수신 로그가 NAT 주소에서 온 이백 응답이어야 합니다. 같은 구간의 접근 감사에도 허용 기록이 있어야 하죠.
+
+      세 번째 줄에서는 새 경로를 만드는 대신 첫 실행과 똑같은 URL을 사용했어요. 그래야 잘못된 URL이거나 Mock 서버에 그 경로가 없어서 실패했다는 설명을 배제할 수 있습니다. 이때 출발지만 NAT를 거치지 않는 별도 IPv4로 바꿨어요. 클라이언트가 사백삼을 받고, 감사 로그의 거부 출발지도 NAT 주소와 달라야 통과입니다.
+
+      아래 세 항목을 보시면 자료를 연결하는 기준이 나와 있죠. 호스트는 동일해야 하고, HTTP 로그는 경로까지 맞춰야 하며, 각각의 UTC 시간창은 겹치면 안 됩니다. 감사 로그에는 프로브 경로가 없어서 이 시간창이 특히 중요해요. 출발지를 해석할 때는 요청자가 넣을 수 있는 헤더가 아니라 App Service가 기록한 CIp를 사용했습니다. 다음 장에서 실제 관측값이 이 매트릭스와 어떻게 맞았는지 보겠습니다.
+
+  - layout: content
+    title: "실측 결과 — NAT IPv4 일치와 동일 URL 차단"
+    title_size: 26
+    archetype: numbers
+    covers: ["네트워크 검증"]
+    blocks:
+      - type: table
+        id: results
+        box: [48, 112, 1184, 272]
+        columns: ["ID", "관측 시각 (UTC)", "HTTP", "수신 IP / 접근 감사", "판정"]
+        col_widths: [0.07, 0.24, 0.10, 0.47, 0.12]
+        row_h: 70
+        size: 14
+        header_fill: "0078D4"
+        align: [center, left, center, left, center]
+        rows:
+          - ["01", "08:20:33.01263", "200", "NAT IPv4와 일치 · Allowed · Lakehouse 적재", "PASS"]
+          - ["02", "08:21:31.568068", "200", "NAT IPv4와 일치 · Allowed · Lakehouse 적재", "PASS"]
+          - ["03", "08:22:28.6340908", "403", "NAT와 다른 IPv4 · Denied · 01과 동일 URL", "PASS"]
+      - type: cards
+        id: observed
+        box: [48, 405, 1184, 139]
+        columns: 2
+        style: accent-left
+        title_size: 15
+        body_size: 13
+        items:
+          - {title: "허용 2건 · 200 / Allowed", body: "각 프로브의 HTTP 수신 IP와 IP 감사 출발지가 NAT 주소와 일치했습니다.", color: "2E7D32"}
+          - {title: "차단 1건 · 403 / Denied", body: "동일 URL의 클라이언트 응답과 다른 IPv4의 IP 감사 기록을 대조했습니다.", color: "C62828"}
+      - type: callout
+        id: timestamps
+        box: [48, 576, 1184, 77]
+        style: bar
+        size: 14
+        text: "01·02 시각은 App Service HTTP 로그, 03은 IP 감사 로그 기준입니다. 실제 IP와 실행 식별자는 공개하지 않습니다."
+    source: "공개 실측 요약 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/README.md"
+    notes: |
+      앞에서 정의한 매트릭스에 실제 관측값을 넣으면 이렇게 됩니다. 날짜는 이천이십육 년 십일 월 이십 일이고 리전은 West US 3입니다. 표의 시각은 UTC입니다. 첫 번째 요청은 여덟 시 이십 분 삼십삼 초, 두 번째 요청은 여덟 시 이십일 분 삼십일 초에 수신됐습니다. 둘 다 이백 응답을 받았고 기록된 출발지와 고정 NAT 주소가 정확히 일치했어요. 두 Fabric 실행도 각각 완료됐고 Lakehouse 안의 프로브 식별자를 실행별로 대조했습니다.
+
+      세 번째 줄은 여덟 시 이십이 분 이십팔 초에 기록된 접근 감사 결과입니다. 같은 URL을 별도 출발지에서 요청했을 때 클라이언트가 사백삼을 받았고, 감사 로그에도 실제로 NAT와 다른 주소가 거부된 것으로 남았어요. 앞 두 줄과 달리 이 줄의 시각은 HTTP 수신 로그가 아니라 IP 감사 로그에서 가져온 값입니다. 이 차이를 구분해야 로그가 생성되는 위치를 혼동하지 않겠죠.
+
+      아래의 두 카드처럼 최종 두 허용 실행과 한 차단 대조군이 모두 통과했습니다. 원본 증거를 판정기에 넣어 종료 코드도 영으로 확인했어요. 겹치지 않는 시간창을 사용했기 때문에 같은 주소에 보낸 두 요청을 섞지 않았습니다. 실제 주소를 공개하지 않아도 세 관측의 일치와 불일치 관계는 확인할 수 있습니다. 이제 재현 및 정리로 넘어가, 첫 진단 실행이 왜 최종 집계에 들어가지 않았는지부터 보겠습니다.
+
+  - layout: section
+    section_no: "02"
+    title: "재현 및 정리"
+    subtitle: "REST Copy 설정 · 판정 절차 · 별도 승인 정리"
+    notes: |
+      앞에서 실측 결과 세 건이 어떻게 판정됐는지 봤습니다. 이제 재현 및 정리 관점으로 전환할게요. 먼저 REST 연결과 페이지 매김 설정을 살펴보고, 실제 실행에서 어떤 시행착오가 있었는지 확인하겠습니다. 마지막으로 이번 검증이 입증한 범위와 Azure 리소스 정리 상태를 구분해서 보겠습니다.
+
+  - layout: content
+    title: "재현 설정 — 게이트웨이 연결과 단일 요청"
+    title_size: 26
+    archetype: process
+    covers: ["재현 및 정리"]
+    blocks:
+      - type: code
+        id: pagination
+        box: [48, 113, 572, 202]
+        title: "REST Copy Activity · paginationRules"
+        size: 15
+        code: |
+          {
+            "MaxRequestNumber": "1",
+            "EndCondition:$.ok": "Exist"
+          }
+      - type: cards
+        id: connection
+        box: [48, 332, 572, 201]
+        columns: 1
+        style: accent-top
+        title_size: 15
+        body_size: 13
+        items:
+          - title: "REST 연결"
+            body: "VirtualNetworkGateway · Anonymous · HTTPS\nRestService.Contents · baseUrl\n상대 경로: @concat('probe/',pipeline().RunId)"
+            color: "008577"
+      - type: table
+        id: run-sequence
+        box: [640, 113, 592, 420]
+        columns: ["순서", "확인할 항목"]
+        col_widths: [0.30, 0.70]
+        row_h: 96
+        size: 14
+        header_fill: "0078D4"
+        rows:
+          - ["01 배포", "Bicep what-if로 범위 확인\n승인 후 배포하고 정적 IPv4 확인"]
+          - ["02 Fabric 실행", "게이트웨이 연결을 사용해 2회 실행\nLakehouse 적재 및 프로브 일치 확인"]
+          - ["03 대조군", "같은 URL을 외부 IPv4에서 호출\n클라이언트 응답과 App Service 로그 대조"]
+          - ["04 증거 판정", "호스트·프로브 경로·UTC 시간창으로 연결\n판정기 종료 코드 0 확인"]
+      - type: callout
+        id: pagination-finding
+        box: [48, 566, 1184, 85]
+        style: bar
+        size: 14
+        text: "첫 진단은 supportRFC5988 = false만 적용해 동일 URL을 반복 호출했습니다. 규칙을 보완한 뒤 새 실행을 진행했습니다."
+    source: "Microsoft Learn — https://learn.microsoft.com/fabric/data-factory/connector-rest-copy-activity ; https://learn.microsoft.com/rest/api/fabric/core/connections/list-supported-connection-types"
+    notes: |
+      이제 재현 설정을 보겠습니다. 가장 먼저 확인할 것은 REST 연결의 종류예요. 연결이 VirtualNetworkGateway를 가리켜야 이번과 같은 송신 경로를 시험할 수 있습니다. 이 PoC의 게이트웨이에서 지원된 방식은 RestService.Contents였고, baseUrl에는 HTTPS 주소를 지정했어요. 모의 API는 실제 업무 데이터를 받지 않으므로 익명 연결을 사용했지만, 출발지 제한은 App Service에서 따로 걸었습니다.
+
+      왼쪽 코드에 있는 두 규칙은 요청 횟수를 통제하기 위한 설정입니다. 처음에는 supportRFC5988을 false로만 두면 될 것으로 봤는데, 진단 실행이 같은 URL을 반복 호출했어요. 따라서 MaxRequestNumber를 일로 제한하고 응답의 ok 속성이 존재하면 종료하도록 구성했습니다. 최초 진단을 취소한 뒤 별개의 실행 두 건으로 최종 증거를 다시 모았죠.
+
+      오른쪽은 수행 순서입니다. 먼저 Bicep 미리보기에서 새 PoC 그룹 외에 변경이 없는지 보고 승인 후 배포합니다. 다음으로 Fabric 실행과 적재를 확인하고, 그중 한 URL을 외부에서 호출합니다. 마지막으로 HTTP 로그와 IP 감사 로그를 짧은 시간창으로 대조해 판정기를 실행합니다. 화면의 코드는 요청에 필요한 일부 설정이고, 전체 배포 명령은 실행 안내에 있습니다. 마지막 장에서 남은 한계와 정리 상태를 확인하겠습니다.
+
+  - layout: content
+    title: "결과 정리 — 검증 범위와 리소스 상태"
+    title_size: 26
+    archetype: summary
+    covers: ["재현 및 정리"]
+    blocks:
+      - type: table
+        id: disposition
+        box: [48, 112, 1184, 282]
+        columns: ["항목", "확인 결과", "적용 범위 / 후속 조건"]
+        col_widths: [0.21, 0.38, 0.41]
+        row_h: 56
+        size: 13
+        header_fill: "0078D4"
+        rows:
+          - ["고정 송신 IP", "Fabric 두 실행의 수신 주소가 NAT와 일치", "동일한 게이트웨이 연결·NAT 경로에서 확인"]
+          - ["/32 접근 제한", "같은 URL, 다른 IPv4는 403 / Denied", "공개 HTTPS Mock 기준. 고객망은 별도 검증"]
+          - ["Fabric 정리", "연결·게이트웨이·작업 영역 404", "기존 Trial은 Active 유지"]
+          - ["Azure 정리", "18:08 KST 기준 PoC 그룹 존재", "PowerPlatformSAL 해제 후 그룹 삭제 여부 확인"]
+      - type: stats
+        id: summary-stats
+        box: [48, 409, 1184, 138]
+        style: card
+        value_size: 44
+        align: center
+        items:
+          - {value: "2/2", label: "허용 경로 검증", sub: "HTTP 200 · NAT IPv4", color: "0078D4"}
+          - {value: "1/1", label: "차단 대조군 검증", sub: "HTTP 403 · Denied", color: "0078D4"}
+          - {value: "3", label: "기능 검증 PASS", sub: "정리 상태는 별도", color: "0078D4"}
+      - type: callout
+        id: final-scope
+        box: [48, 573, 1184, 81]
+        style: bar
+        size: 14
+        text: "검증은 App Service의 공개 HTTPS 수신 지점까지입니다. 온프레미스 경로, 처리량, 장애 복구는 이 결과로 입증하지 않습니다."
+    source: "Microsoft Learn — https://learn.microsoft.com/data-integration/vnet/data-gateway-faqs ; 공개 실측 요약 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/README.md"
+    notes: |
+      앞에서 재현에 필요한 설정과 확인 순서를 봤습니다. 정리하면 세 가지를 기억하시면 됩니다. 먼저 이 구성에서는 Fabric이 VNet Data Gateway를 사용해 요청했을 때 수신 측에서 NAT의 정적 주소를 확인했습니다. 다음으로 같은 URL도 NAT를 사용하지 않는 출발지에서는 거부됐어요. 단순히 응답이 돌아왔다는 사실보다 강한 근거가 되는 이유는, 각 요청이 어떤 IP에서 들어왔고 정책에서 어떻게 평가됐는지 별도로 확인했기 때문입니다.
+
+      마지막으로 기능 검증과 자원 삭제는 나눠 봐야 합니다. 십일 월 이십 일 오후 여섯 시 팔 분에 확인했을 때 Fabric에서 만든 연결, 게이트웨이, 작업 영역은 모두 삭제가 확인됐고 기존 Trial은 그대로 활성 상태였어요. Azure 리소스 그룹은 당시 남아 있었습니다. 위임 서브넷의 PowerPlatformSAL이 해제된 뒤에야 승인된 전용 그룹을 삭제하고 그룹이 사라졌는지 조회할 수 있죠. 표에 적힌 시각 이후의 완료 여부는 이 장표에서 주장하지 않습니다.
+
+      검증을 운영 구성에 적용한다면 고객 API가 보는 출발지와 방화벽 정책을 실제 고객 경로에서 다시 확인해야 합니다. 이번 결과로 처리량이나 장애 복구 동작을 판단하지는 않았어요. 필요하시면 저장소의 실행 안내와 공개 증적에서 각 판정 기준을 확인하실 수 있습니다. 감사합니다.
