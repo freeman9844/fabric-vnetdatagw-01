@@ -25,9 +25,9 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 
 [편집 가능한 PowerPoint v2](deck/fabric-nat-design-v2.pptx) · [YAML 원본](deck/fabric-nat-design-v2.yaml) · [발표 노트](deck/fabric-nat-design-v2.script.md) · [전체 미리보기](deck/fabric-nat-design-v2_render/contact_sheet.png)
 
-7장입니다. 검증 구성을 먼저 보여 주고, `01 네트워크 검증`에서 검증 매트릭스와 실측을, `02 재현 및 정리`에서 설정과 남은 한계를 다룹니다. 이미지를 클릭하면 원본 크기로 열립니다.
+아래에서 최신 v2 장표 7장을 순서대로 볼 수 있습니다. 이미지를 클릭하면 원본 크기로 열립니다.
 
-### 검증 샘플 구성
+### 1. 검증 샘플 구성
 
 NAT Gateway는 VNet의 위임 서브넷에 연결하는 별도 관리형 리소스입니다. 그림에서는 VNet 경계 안, 위임 서브넷 경계 밖에 배치하고 연결 설정을 주황 점선으로 표시했습니다. 공개 HTTPS Mock API는 VNet 밖에 있습니다.
 
@@ -35,13 +35,31 @@ NAT Gateway는 VNet의 위임 서브넷에 연결하는 별도 관리형 리소�
 
 ### 01 네트워크 검증
 
-[섹션](deck/fabric-nat-design-v2_render/slide_02.png) · [검증 매트릭스](deck/fabric-nat-design-v2_render/slide_03.png)
+#### 2. 네트워크 검증 섹션
+
+<a href="deck/fabric-nat-design-v2_render/slide_02.png"><img src="deck/fabric-nat-design-v2_render/slide_02.png" alt="네트워크 검증 섹션: 고정 송신 IPv4, /32 접근 제한, 동일 URL 대조군" width="960"></a>
+
+#### 3. 검증 매트릭스
+
+<a href="deck/fabric-nat-design-v2_render/slide_03.png"><img src="deck/fabric-nat-design-v2_render/slide_03.png" alt="허용 요청 두 건과 차단 대조군의 기대 응답과 판정 근거" width="960"></a>
+
+#### 4. 실측 결과
 
 <a href="deck/fabric-nat-design-v2_render/slide_04.png"><img src="deck/fabric-nat-design-v2_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
 
 ### 02 재현 및 정리
 
-[섹션](deck/fabric-nat-design-v2_render/slide_05.png) · [Fabric 재현 설정](deck/fabric-nat-design-v2_render/slide_06.png) · [검증 범위와 리소스 정리 상태](deck/fabric-nat-design-v2_render/slide_07.png)
+#### 5. 재현 및 정리 섹션
+
+<a href="deck/fabric-nat-design-v2_render/slide_05.png"><img src="deck/fabric-nat-design-v2_render/slide_05.png" alt="재현 및 정리 섹션: REST Copy 설정, 판정 절차, 별도 승인 정리" width="960"></a>
+
+#### 6. Fabric 재현 설정
+
+<a href="deck/fabric-nat-design-v2_render/slide_06.png"><img src="deck/fabric-nat-design-v2_render/slide_06.png" alt="Fabric 게이트웨이 연결, 단일 호출을 위한 페이지 매김 규칙, 증거 판정 순서" width="960"></a>
+
+#### 7. 검증 범위와 리소스 정리 상태
+
+<a href="deck/fabric-nat-design-v2_render/slide_07.png"><img src="deck/fabric-nat-design-v2_render/slide_07.png" alt="기능 검증 3건 통과와 Fabric 및 Azure의 마지막 리소스 정리 확인 상태" width="960"></a>
 
 ## 재현 순서
 
