@@ -23,23 +23,25 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 
 ## 장표
 
-[편집 가능한 PowerPoint v1](deck/fabric-nat-design-v1.pptx) · [YAML 원본](deck/fabric-nat-design-v1.yaml) · [발표 노트](deck/fabric-nat-design-v1.script.md) · [전체 미리보기](deck/fabric-nat-design-v1_render/contact_sheet.png)
+[편집 가능한 PowerPoint v2](deck/fabric-nat-design-v2.pptx) · [YAML 원본](deck/fabric-nat-design-v2.yaml) · [발표 노트](deck/fabric-nat-design-v2.script.md) · [전체 미리보기](deck/fabric-nat-design-v2_render/contact_sheet.png)
 
 7장입니다. 검증 구성을 먼저 보여 주고, `01 네트워크 검증`에서 검증 매트릭스와 실측을, `02 재현 및 정리`에서 설정과 남은 한계를 다룹니다. 이미지를 클릭하면 원본 크기로 열립니다.
 
 ### 검증 샘플 구성
 
-<a href="deck/fabric-nat-design-v1_render/slide_01.png"><img src="deck/fabric-nat-design-v1_render/slide_01.png" alt="Fabric Pipeline에서 App Service까지의 NAT 허용 경로와 차단 대조군" width="960"></a>
+NAT Gateway는 VNet의 위임 서브넷에 연결하는 별도 관리형 리소스입니다. 그림에서는 VNet 경계 안, 위임 서브넷 경계 밖에 배치하고 연결 설정을 주황 점선으로 표시했습니다. 공개 HTTPS Mock API는 VNet 밖에 있습니다.
+
+<a href="deck/fabric-nat-design-v2_render/slide_01.png"><img src="deck/fabric-nat-design-v2_render/slide_01.png" alt="Azure VNet 안에서 위임 서브넷과 연결된 NAT Gateway 및 VNet 밖 App Service의 공개 HTTPS 접근 경로" width="960"></a>
 
 ### 01 네트워크 검증
 
-[섹션](deck/fabric-nat-design-v1_render/slide_02.png) · [검증 매트릭스](deck/fabric-nat-design-v1_render/slide_03.png)
+[섹션](deck/fabric-nat-design-v2_render/slide_02.png) · [검증 매트릭스](deck/fabric-nat-design-v2_render/slide_03.png)
 
-<a href="deck/fabric-nat-design-v1_render/slide_04.png"><img src="deck/fabric-nat-design-v1_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
+<a href="deck/fabric-nat-design-v2_render/slide_04.png"><img src="deck/fabric-nat-design-v2_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
 
 ### 02 재현 및 정리
 
-[섹션](deck/fabric-nat-design-v1_render/slide_05.png) · [Fabric 재현 설정](deck/fabric-nat-design-v1_render/slide_06.png) · [검증 범위와 리소스 정리 상태](deck/fabric-nat-design-v1_render/slide_07.png)
+[섹션](deck/fabric-nat-design-v2_render/slide_05.png) · [Fabric 재현 설정](deck/fabric-nat-design-v2_render/slide_06.png) · [검증 범위와 리소스 정리 상태](deck/fabric-nat-design-v2_render/slide_07.png)
 
 ## 재현 순서
 
