@@ -1,5 +1,7 @@
 # 실측 증적
 
+## NAT 송신 IP 검증
+
 2026-11-20 Azure West US 3에서 실행한 최종 검증을 요약합니다. `01`과 `02`는 독립적인 Fabric Pipeline 실행이고, `03`은 `01`과 **같은 HTTPS URL**을 NAT를 거치지 않는 IPv4 클라이언트로 호출한 대조군입니다.
 
 | 순서 | 검증 | 관측 시각 (UTC) | HTTP | App Service IP 감사 | 결과 |
@@ -15,3 +17,20 @@
 ## 정리 상태
 
 2026-11-20 18:08 KST 확인 기준입니다. Fabric 연결·게이트웨이·PoC 작업 영역은 삭제 후 조회 시 모두 `404`였고 기존 Trial은 `Active`였습니다. Azure PoC 그룹은 아직 존재했고, 위임 서브넷에 `PowerPlatformSAL`이 남아 있어 Azure 리소스 정리 완료는 확인되지 않았습니다.
+
+## Private Link 수신 검증
+
+2026-11-25 Azure West US 3에서 전용 F2 작업 영역의 OneLake Lakehouse `Files`에 합성 파일을 썼습니다. 공용과 사설 요청은 동일한 Entra 계정, 작업 영역, Lakehouse를 사용했습니다.
+
+| 정책 | 경로 | 실측 |
+|---|---|---|
+| `Allow` | 외부 클라이언트 → 공용 OneLake | `PUT 201` |
+| `Allow` | VNet 테스트 VM → 작업 영역 Private Endpoint | `PUT 201` |
+| `Deny` | 외부 클라이언트 → 공용 OneLake | `PUT 403`, `DeniedByPolicy` |
+| `Deny` | VNet 테스트 VM → 작업 영역 Private Endpoint | `PUT 201`, `GET 200`, SHA-256 일치 |
+
+Private Endpoint는 `Approved`였고, 사설 DNS 응답과 실제 HTTPS 연결 IP가 모두 해당 NIC의 IP와 일치했습니다. 작업 영역의 아웃바운드 정책과 테넌트 전체 공용 접근 설정(`차단 안 함`)은 바꾸지 않았습니다.
+
+**정리 확인:** PoC 작업 영역은 재조회 `404`, 임시 F2는 Fabric 용량 목록에서 부재, 전용 Azure 리소스 그룹은 존재 여부 `false`였습니다. 기존 Trial은 `Active`였으며 테넌트의 작업 영역 수준 인바운드 규칙 허용은 켜진 상태로 유지됐습니다.
+
+[비식별 결과 JSON](fabric-inbound-private.json) · [검증 재현 절차](../docs/runbook-inbound-private.md)

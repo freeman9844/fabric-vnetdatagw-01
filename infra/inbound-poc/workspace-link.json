@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "tenantId": { "type": "string" },
+    "workspaceId": { "type": "string" },
+    "tags": { "type": "object" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Fabric/privateLinkServicesForFabric",
+      "apiVersion": "2024-06-01",
+      "name": "pls-fabric-workspace",
+      "location": "global",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "tenantId": "[parameters('tenantId')]",
+        "workspaceId": "[parameters('workspaceId')]"
+      }
+    }
+  ],
+  "outputs": {
+    "linkId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Fabric/privateLinkServicesForFabric', 'pls-fabric-workspace')]"
+    }
+  }
+}

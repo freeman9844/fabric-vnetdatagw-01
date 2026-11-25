@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-25",
+  "region": "westus3",
+  "scope": "Dedicated F2 workspace; direct OneLake Blob API to Lakehouse Files",
+  "result": "pass",
+  "tenantPublicInternetBlocked": false,
+  "tenantWorkspaceInboundRulesEnabled": true,
+  "workspaceInboundDuringTest": "Deny",
+  "sameIdentityForPublicAndPrivateRequests": true,
+  "publicRoute": {
+    "putBeforeDenyHttpStatus": 201,
+    "putAfterDenyHttpStatus": 403,
+    "errorCode": "DeniedByPolicy"
+  },
+  "privateRoute": {
+    "endpointConnectionStatus": "Approved",
+    "dnsAndConnectedIpMatchedEndpointNic": true,
+    "putBeforeDenyHttpStatus": 201,
+    "putAfterDenyHttpStatus": 201,
+    "getAfterDenyHttpStatus": 200,
+    "sha256Matched": true
+  },
+  "cleanup": {
+    "workspaceLookupHttpStatus": 404,
+    "temporaryFabricCapacityAbsent": true,
+    "azureResourceGroupAbsent": true,
+    "existingTrialStillActive": true
+  }
+}
