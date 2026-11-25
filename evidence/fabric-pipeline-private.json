@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-25",
+  "region": "West US 3",
+  "capacity": "F2",
+  "source": "App Service HTTPS REST through VNet Data Gateway and App Service Private Endpoint",
+  "sink": "Native Lakehouse Files in the same Fabric workspace; no explicit sink gateway connection",
+  "appServiceProbe": { "publicHttp": 403, "privateHttp": 200 },
+  "publicOneLakeUnderDeny": { "writeHttp": 403, "error": "DeniedByPolicy" },
+  "gatewaySubnetControl": {
+    "fabricPrivateEndpointIps": 6,
+    "nextHopWhenBlocked": "None",
+    "successfulRouteWrites": 6,
+    "successfulRouteDeletes": 6
+  },
+  "runs": [
+    { "stage": "allow-baseline", "policy": "Allow", "fabricPeReachable": true, "status": "Completed", "appRequestsWithRunId": 1, "readbackHttp": 200, "sha256Matches": true },
+    { "stage": "deny-pe-open", "policy": "Deny", "fabricPeReachable": true, "status": "Failed", "error": "ActionTimedOut", "appRequestsWithRunId": 0, "readbackHttp": 404, "sha256Matches": null },
+    { "stage": "deny-pe-blocked", "policy": "Deny", "fabricPeReachable": false, "status": "Failed", "error": "LakehouseForbiddenError", "innerError": "DeniedByPolicy", "appRequestsWithRunId": 1, "readbackHttp": 404, "sha256Matches": null },
+    { "stage": "deny-pe-restored", "policy": "Deny", "fabricPeReachable": true, "status": "Completed", "appRequestsWithRunId": 1, "readbackHttp": 200, "sha256Matches": true },
+    { "stage": "deny-pe-confirmation", "policy": "Deny", "fabricPeReachable": true, "status": "Completed", "appRequestsWithRunId": 1, "readbackHttp": 200, "sha256Matches": true }
+  ],
+  "confirmation": {
+    "verifiedSyntheticPayloadBytes": 262144,
+    "publicWriteBeforeHttp": 403,
+    "publicWriteAfterHttp": 403,
+    "publicWriteError": "DeniedByPolicy",
+    "statusPollingAndPrivateReadbackOutsideCopyWindow": true,
+    "fabricPeBytesInAndOutDuringCopyWindow": 12255,
+    "fabricPeBytesInAndOutDuringReadbackMinute": 419904,
+    "metricInterval": "PT1M",
+    "packetLevelAttribution": false
+  },
+  "cleanup": {
+    "originalWorkspacePolicyRestored": true,
+    "remainingTestRoutes": 0,
+    "sourceConnectionGetHttp": 404,
+    "gatewayGetHttp": 404,
+    "workspaceGetHttp": 404,
+    "temporaryCapacityAbsent": true,
+    "azureResourceGroupAbsent": true,
+    "existingCapacitiesActive": true,
+    "tenantSettingsUnchanged": true
+  }
+}

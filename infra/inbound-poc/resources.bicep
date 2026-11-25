@@ -5,6 +5,8 @@ param tags object
 param capacityAdmin string
 param sshPublicKey string
 param vmAdminUsername string = 'pocprobe'
+@allowed(['Disabled', 'RouteTableEnabled'])
+param endpointNetworkPolicies string = 'Disabled'
 
 var bastionPrefix = '10.91.0.0/26'
 var vmPrefix = '10.91.0.64/26'
@@ -104,7 +106,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-07-01' = {
         properties: {
           addressPrefix: endpointPrefix
           defaultOutboundAccess: false
-          privateEndpointNetworkPolicies: 'Disabled'
+          privateEndpointNetworkPolicies: endpointNetworkPolicies
         }
       }
     ]

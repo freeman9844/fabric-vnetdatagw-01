@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { after, before, test } from 'node:test';
+import { createServer as createPipelineServer } from './pipeline/server.mjs';
 import { createServer } from './server.mjs';
 
 const probeId = 'c0ffee00-cafe-4ace-8ace-fedcba987654';
@@ -52,4 +53,31 @@ test('rejects_non_probe_paths_and_unsupported_methods', async () => {
   assert.equal(response.status, 405);
   assert.equal(response.headers.get('allow'), 'GET');
   await response.body.cancel();
+});
+
+test('pipeline_probe_returns_verified_synthetic_content_and_correlates_only_valid_requests', async (t) => {
+  const logs = [];
+  const pipeline = createPipelineServer(entry => logs.push(JSON.parse(entry))).listen(0, '127.0.0.1');
+  await once(pipeline, 'listening');
+  t.after(() => new Promise((resolve, reject) => {
+    pipeline.close(error => error ? reject(error) : resolve());
+  }));
+  const app = `http://127.0.0.1:${pipeline.address().port}`;
+
+  const health = await fetch(`${app}/`);
+  assert.deepEqual(await health.json(), { ok: true });
+  const invalid = await fetch(`${app}/probe/${'-'.repeat(36)}`);
+  assert.equal(invalid.status, 404);
+  await invalid.body.cancel();
+
+  const response = await fetch(`${app}/probe/${probeId}`);
+  assert.equal(response.status, 200);
+  const { ok, probeId: actualId, data } = await response.json();
+  assert.equal(ok, true);
+  assert.equal(actualId, probeId);
+  const payload = Buffer.from(data, 'base64');
+  assert.equal(payload.length, 256 * 1024);
+  const digest = await crypto.subtle.digest('SHA-256', payload);
+  assert.equal(Buffer.from(digest).toString('hex'), '657bd23692284258f719820fa25868e9d5049dda0812fde6eed40660e263ca03');
+  assert.deepEqual(logs, [{ event: 'synthetic-probe', probeId }]);
 });

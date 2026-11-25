@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "name": "SeparateControlPlaneTraffic",
+        "type": "Wait",
+        "dependsOn": [],
+        "typeProperties": { "waitTimeInSeconds": 75 }
+      },
+      {
+        "name": "CopySyntheticProbe",
+        "type": "Copy",
+        "dependsOn": [
+          { "activity": "SeparateControlPlaneTraffic", "dependencyConditions": ["Succeeded"] }
+        ],
+        "policy": { "retry": 0, "timeout": "0.00:08:00" },
+        "typeProperties": {
+          "enableStaging": false,
+          "source": {
+            "type": "RestSource",
+            "requestMethod": "GET",
+            "httpRequestTimeout": "00:02:30",
+            "requestInterval": "00.00:00:02.000",
+            "paginationRules": { "EndCondition:$.ok": "Exist", "MaxRequestNumber": "1" },
+            "datasetSettings": {
+              "type": "RestResource",
+              "schema": [],
+              "externalReferences": { "connection": "<REST_CONNECTION_ID>" },
+              "typeProperties": {
+                "relativeUrl": { "value": "@concat('probe/',pipeline().RunId)", "type": "Expression" }
+              }
+            }
+          },
+          "sink": {
+            "type": "JsonSink",
+            "formatSettings": { "type": "JsonWriteSettings" },
+            "storeSettings": { "type": "LakehouseWriteSettings" },
+            "datasetSettings": {
+              "type": "Json",
+              "schema": {},
+              "linkedService": {
+                "name": "pipeline_private_lakehouse",
+                "properties": {
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "rootFolder": "Files",
+                    "workspaceId": "<WORKSPACE_ID>",
+                    "artifactId": "<LAKEHOUSE_ID>"
+                  }
+                }
+              },
+              "typeProperties": {
+                "location": {
+                  "type": "LakehouseLocation",
+                  "folderPath": "probes",
+                  "fileName": { "value": "@concat(pipeline().RunId,'.json')", "type": "Expression" }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

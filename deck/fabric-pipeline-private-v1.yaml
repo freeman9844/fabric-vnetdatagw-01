@@ -1,0 +1,116 @@
+deck:
+  title: "Fabric Pipeline · Inbound Deny와 두 Private Endpoint"
+  level: L300
+  mode: fit
+  target_slides: 2
+  theme: light
+  brand: none
+  slide_numbers: true
+  topic_marker: false
+  footer: "Fabric Pipeline Private Link PoC · 2026-11-25 · 실제 Azure West US 3 · F2"
+slides:
+  - layout: content
+    title: "Fabric Pipeline 구성 — 원본 읽기와 OneLake 적재의 두 PE"
+    title_size: 26
+    archetype: architecture
+    blocks:
+      - type: shapes
+        id: pipeline-private-topology
+        box: [40, 112, 1200, 532]
+        items:
+          - {kind: round, name: vnet-frame, x: 8, y: 20, w: 727, h: 370, fill: "FFFFFF", line: "1F4E79", line_w: 2, radius: 6}
+          - {kind: text, name: vnet-title, x: 26, y: 30, w: 680, h: 29, text: "Azure VNet · West US 3", size: 15, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: gateway-subnet, x: 26, y: 73, w: 282, h: 272, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: gateway-subnet-label, x: 42, y: 84, w: 250, h: 26, text: "Gateway 위임 서브넷", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: app-subnet, x: 430, y: 73, w: 286, h: 122, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: app-subnet-label, x: 445, y: 82, w: 255, h: 25, text: "App Service PE 서브넷", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: fabric-subnet, x: 430, y: 223, w: 286, h: 122, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: fabric-subnet-label, x: 445, y: 232, w: 255, h: 25, text: "Fabric PE 서브넷", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: text, name: vnet-dns, x: 26, y: 354, w: 690, h: 26, text: "App Service·Fabric Private DNS 영역 연결", size: 11, color: "1F4E79", align: left}
+
+          - {kind: text, name: paas-title, x: 800, y: 30, w: 392, h: 29, text: "VNet 외부", size: 15, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: app-frame, x: 800, y: 73, w: 392, h: 122, fill: "FFFFFF", line: "008577", line_w: 2, radius: 6}
+          - {kind: text, name: app-label, x: 818, y: 82, w: 355, h: 25, text: "Azure App Service", size: 12, bold: true, color: "006B5C", align: left}
+          - {kind: round, name: workspace-frame, x: 800, y: 213, w: 392, h: 177, fill: "FFFFFF", line: "008577", line_w: 2, radius: 6}
+          - {kind: text, name: workspace-label, x: 818, y: 219, w: 355, h: 26, text: "Microsoft Fabric · Inbound Deny", size: 12, bold: true, color: "006B5C", align: left}
+
+          - {kind: round, name: gateway, x: 42, y: 118, w: 250, h: 198, fill: "EEF3FB", line: "1F4E79", radius: 6}
+          - {kind: text, name: gateway-title, x: 55, y: 127, w: 225, h: 28, text: "VNet Data Gateway", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: gateway-connector, x: 55, y: 160, w: 225, h: 26, text: "Pipeline의 REST 원본 연결", size: 12, color: "444444", align: left}
+          - {kind: text, name: gateway-route, x: 55, y: 230, w: 225, h: 29, text: "대조군: Fabric PE만 차단", size: 12, bold: true, color: "925000", align: left}
+          - {kind: text, name: gateway-route-detail, x: 55, y: 268, w: 225, h: 27, text: "이 서브넷에만 /32 → None", size: 12, color: "444444", align: left}
+          - {kind: round, name: app-pe, x: 445, y: 109, w: 255, h: 69, fill: "E6F4F1", line: "008577", radius: 5}
+          - {kind: text, name: app-pe-title, x: 457, y: 117, w: 229, h: 26, text: "App Service PE", size: 14, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: app-pe-target, x: 457, y: 147, w: 229, h: 23, text: "sites", size: 11, color: "444444", align: left}
+          - {kind: round, name: fabric-pe, x: 445, y: 259, w: 255, h: 69, fill: "E6F4F1", line: "008577", radius: 5}
+          - {kind: text, name: fabric-pe-title, x: 457, y: 267, w: 229, h: 26, text: "Fabric Workspace PE", size: 14, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: fabric-pe-target, x: 457, y: 297, w: 229, h: 23, text: "대상: workspace · 승인 IP 6개", size: 11, color: "444444", align: left}
+          - {kind: round, name: api, x: 818, y: 109, w: 356, h: 69, fill: "E6F4F1", line: "008577", radius: 5}
+          - {kind: text, name: api-title, x: 831, y: 117, w: 328, h: 26, text: "HTTPS REST Mock API", size: 14, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: api-detail, x: 831, y: 147, w: 328, h: 23, text: "공용 접근 비활성화", size: 11, color: "444444", align: left}
+          - {kind: round, name: lakehouse, x: 818, y: 259, w: 356, h: 69, fill: "E6F4F1", line: "008577", radius: 5}
+          - {kind: text, name: lakehouse-title, x: 831, y: 267, w: 328, h: 26, text: "OneLake · Lakehouse Files", size: 14, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: lakehouse-detail, x: 831, y: 297, w: 328, h: 23, text: "네이티브 대상", size: 11, color: "444444", align: left}
+          - {kind: text, name: pipeline-owner, x: 818, y: 345, w: 356, h: 28, text: "Pipeline · REST Copy Activity", size: 11, bold: true, color: "1F4E79", align: left}
+
+          - {kind: arrow, name: gateway-to-app-pe, x: 292, y: 144, x2: 445, y2: 144, line: "008577", line_w: 2.5}
+          - {kind: text, name: read-label, x: 316, y: 114, w: 107, h: 23, text: "① 원본 읽기", size: 11, bold: true, color: "006B5C", align: center}
+          - {kind: arrow, name: app-pe-to-app, x: 700, y: 144, x2: 818, y2: 144, line: "008577", line_w: 2.5}
+          - {kind: arrow, name: gateway-to-fabric-pe, x: 292, y: 294, x2: 445, y2: 294, line: "008577", line_w: 2.5, dash: true}
+          - {kind: text, name: write-label, x: 316, y: 264, w: 107, h: 23, text: "② 적재 경로", size: 11, bold: true, color: "006B5C", align: center}
+          - {kind: arrow, name: fabric-pe-to-lakehouse, x: 700, y: 294, x2: 818, y2: 294, line: "008577", line_w: 2.5, dash: true}
+
+          - {kind: line, name: orange-rule, x: 8, y: 416, x2: 1192, y2: 416, line: "FF8C00", line_w: 2}
+          - {kind: text, name: legend-solid, x: 8, y: 433, w: 1184, h: 28, text: "실선: 사설 HTTPS 요청·응답 · 점선: 차단·복구로 확인한 적재 의존성", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: text, name: legend-scope, x: 8, y: 473, w: 1184, h: 28, text: "NAT 미사용 · 적재 페이로드의 패킷 추적은 하지 않음", size: 12, color: "444444", align: left}
+    source: "Microsoft Learn — https://learn.microsoft.com/data-integration/vnet/use-data-gateways-pipeline-fabric ; https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-support"
+    notes: |
+      이번에는 앞의 VM 직접 쓰기와 달리 Fabric Pipeline이 App Service에서 데이터를 가져오도록 했습니다. 두 사설 엔드포인트가 같은 일을 하는지, 하나가 없어도 이 구성이 동작하는지 살펴볼게요. 왼쪽 파란 상자는 Azure VNet이고, 오른쪽의 App Service와 Fabric은 이 VNet 밖의 서비스입니다. Fabric에서 실행한 Copy Activity의 REST 원본 연결만 왼쪽의 VNet Data Gateway에 명시적으로 연결했어요. 적재 대상은 같은 F2 작업 영역에 있는 기본 Lakehouse Files이고, 대상에는 별도의 Gateway 연결을 만들지 않았습니다.
+
+      첫 번째 줄은 원본 읽기입니다. 위임 서브넷의 Gateway가 별도 서브넷에 있는 App Service Private Endpoint로 HTTPS 요청을 보냈습니다. 응답은 같은 연결로 돌아오고 App Service 공용 접근은 꺼져 있었습니다. 두 번째 줄은 검증하려던 Fabric 쪽 경로입니다. 별도 서브넷의 Fabric Workspace Private Endpoint가 대상이고, 각 엔드포인트는 자신의 Private DNS 영역을 사용합니다. 이 환경에는 NAT Gateway를 두지 않았어요.
+
+      두 번째 줄의 점선은 패킷을 캡처했다는 뜻이 아닙니다. Gateway 서브넷에만 Fabric PE의 승인된 사설 IP 여섯 개를 대상으로 하는 차단 경로를 적용하고, 이를 제거하기 전후의 적재를 비교했다는 뜻이에요. App Service 쪽 경로나 VM의 사설 관리 경로에는 그 라우트를 넣지 않았습니다. 이제 다음 장에서 원본 요청과 OneLake 적재가 실제로 어떻게 달라졌는지 보겠습니다.
+
+  - layout: content
+    title: "실측 — Fabric PE 경로를 복구하자 Inbound Deny에서 적재 성공"
+    title_size: 26
+    archetype: comparison-table
+    blocks:
+      - type: table
+        id: five-runs
+        box: [48, 112, 1184, 279]
+        columns: ["작업 영역 정책 / Fabric PE 경로", "App Service 요청", "Pipeline / OneLake"]
+        col_widths: [0.45, 0.19, 0.36]
+        row_h: 45
+        size: 13
+        header_fill: "0078D4"
+        align: [left, center, left]
+        rows:
+          - ["01  Allow · 기준선", "1건", "완료 · 파일 GET 200 / 해시 일치"]
+          - ["02  Deny · PE 접근 가능 (첫 실행)", "0건", "시간 초과 · 파일 없음"]
+          - ["03  Deny · Fabric PE 경로만 차단", "1건", "DeniedByPolicy · 파일 없음"]
+          - ["04  Deny · Fabric PE 경로 복구", "1건", "완료 · 파일 GET 200 / 해시 일치"]
+          - ["05  Deny · 복구 상태 재실행", "1건", "완료 · 파일 GET 200 / 해시 일치"]
+      - type: cards
+        id: finding-and-limit
+        box: [48, 413, 1184, 143]
+        columns: 2
+        style: accent-top
+        title_size: 15
+        body_size: 13
+        items:
+          - {title: "공용 OneLake 차단 유지", body: "최종 실행 전후 공용 쓰기 403 DeniedByPolicy. 성공 파일의 합성 데이터 256 KiB를 SHA-256으로 비교했습니다.", color: "008577"}
+          - {title: "경로 의존성 확인 · 패킷 단위 입증 아님", body: "원본 호출과 적재 실패를 분리했습니다. PE 집계 바이트에는 요청별 식별자가 없어 전체 페이로드를 추적할 수 없습니다.", color: "FF8C00"}
+      - type: callout
+        id: cleanup
+        box: [48, 578, 1184, 65]
+        style: bar
+        size: 14
+        text: "정리 확인: PoC Fabric 연결·Gateway·작업 영역·F2와 Azure 그룹 삭제. 기존 용량과 테넌트 설정 유지."
+    source: "비식별 실측 증적 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/fabric-pipeline-private.json ; https://learn.microsoft.com/azure/azure-monitor/reference/supported-metrics/microsoft-network-privateendpoints-metrics"
+    notes: |
+      방금 구성도에서 두 엔드포인트의 역할을 나눠 봤죠. 이제 같은 Pipeline의 다섯 번 실행을 비교해 볼게요. 첫 줄은 인바운드 허용 기준선입니다. App Service에 해당 실행의 요청이 한 번 도착했고 OneLake 파일도 확인했습니다. 공개 접근을 거부로 바꾼 뒤 처음에는 Fabric PE에 접근할 수 있어도 Copy가 시간 초과였어요. 이때는 원본 요청 기록도 없어서 이 실패만으로 적재 경로를 판정할 수 없습니다.
+
+      세 번째 줄에서는 Gateway 서브넷에서 Fabric PE 주소만 차단했습니다. 원본 앱에는 해당 실행 요청이 한 번 왔지만 Lakehouse는 DeniedByPolicy를 반환했고 파일이 없었어요. 원래 경로를 복구하고 같은 거부 정책을 유지하자 네 번째와 다섯 번째 실행이 모두 완료됐습니다. 사설 경로로 파일을 읽어 합성 데이터 이백오십육 키비바이트의 해시를 원본과 대조했고, 마지막 실행 전후에 공용 쓰기가 사백삼으로 차단된 것도 다시 확인했습니다.
+
+      그래서 이번 구성에서는 원본을 사설로 읽을 수 있어도 Fabric 쪽 접근이 별도로 필요하다고 볼 수 있어요. 다만 모니터 지표는 분 단위 집계여서 어떤 연결이 적재 페이로드 전부를 보냈는지까지 식별하지 못합니다. 마지막으로 임시 연결, Gateway, 작업 영역, F2와 Azure 그룹의 부재를 모두 조회했습니다. 기존 용량과 테넌트 설정은 변경하지 않았어요. 재현할 때도 동일한 원본, 목적지와 차단 대조군을 갖추고 이 판정 범위를 유지해 주세요.

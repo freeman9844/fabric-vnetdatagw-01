@@ -1,0 +1,67 @@
+deck:
+  title: "Fabric Inbound Deny · OneLake Private Endpoint"
+  level: L300
+  mode: fit
+  target_slides: 1
+  theme: light
+  brand: none
+  slide_numbers: false
+  topic_marker: false
+  footer: "Fabric Private Link PoC · 2026-11-25 · 실제 Azure West US 3 검증"
+slides:
+  - layout: content
+    title: "Inbound Deny — OneLake 사설 적재는 성공, 공용 쓰기는 차단"
+    title_size: 26
+    archetype: architecture
+    blocks:
+      - type: shapes
+        id: private-link-topology
+        box: [40, 112, 1200, 532]
+        items:
+          - {kind: round, name: vnet-frame, x: 8, y: 20, w: 680, h: 238, fill: "FFFFFF", line: "1F4E79", line_w: 2, radius: 6}
+          - {kind: text, name: vnet-title, x: 27, y: 32, w: 642, h: 28, text: "Azure VNet · West US 3", size: 15, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: probe-subnet, x: 28, y: 70, w: 248, h: 136, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: probe-subnet-title, x: 42, y: 78, w: 219, h: 25, text: "검증 VM 서브넷", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: round, name: endpoint-subnet, x: 383, y: 70, w: 285, h: 136, fill: "F7FAFF", line: "5578FF", dash: true, radius: 5}
+          - {kind: text, name: endpoint-subnet-title, x: 397, y: 78, w: 252, h: 25, text: "Private Endpoint 전용 서브넷", size: 12, bold: true, color: "1F4E79", align: left}
+          - {kind: text, name: private-dns, x: 28, y: 216, w: 640, h: 27, text: "Private DNS · privatelink.fabric.microsoft.com · VNet에 연결", size: 12, color: "1F4E79", align: left}
+
+          - {kind: round, name: fabric-frame, x: 777, y: 20, w: 415, h: 369, fill: "FFFFFF", line: "008577", line_w: 2, radius: 6}
+          - {kind: text, name: fabric-title, x: 795, y: 32, w: 378, h: 28, text: "Microsoft Fabric · SaaS (VNet 외부)", size: 15, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: workspace-policy, x: 795, y: 64, w: 378, h: 26, text: "임시 F2 · 전용 작업 영역 · Inbound Deny", size: 12, bold: true, color: "1F4E79", align: left}
+
+          - {kind: round, name: probe-vm, x: 42, y: 110, w: 219, h: 79, fill: "EEF3FB", line: "1F4E79", radius: 5}
+          - {kind: text, name: probe-label, x: 54, y: 119, w: 195, h: 27, text: "Linux 테스트 VM", size: 15, bold: true, color: "171717", align: left}
+          - {kind: text, name: probe-detail, x: 54, y: 150, w: 195, h: 24, text: "공인 IP 없음", size: 12, color: "444444", align: left}
+          - {kind: round, name: private-endpoint, x: 397, y: 110, w: 252, h: 79, fill: "E6F4F1", line: "008577", line_w: 2, radius: 5}
+          - {kind: text, name: endpoint-label, x: 409, y: 119, w: 228, h: 27, text: "Private Endpoint", size: 15, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: endpoint-detail, x: 409, y: 150, w: 228, h: 24, text: "대상: workspace · Approved", size: 12, color: "444444", align: left}
+          - {kind: round, name: lakehouse, x: 796, y: 110, w: 376, h: 79, fill: "E6F4F1", line: "008577", radius: 5}
+          - {kind: text, name: lakehouse-label, x: 809, y: 119, w: 349, h: 27, text: "OneLake · Lakehouse Files", size: 15, bold: true, color: "006B5C", align: left}
+          - {kind: text, name: private-result, x: 809, y: 150, w: 349, h: 24, text: "PUT 201 · GET 200 · SHA-256 일치", size: 12, bold: true, color: "006B5C", align: left}
+
+          - {kind: arrow, name: vm-to-endpoint, x: 261, y: 149, x2: 397, y2: 149, line: "008577", line_w: 2.5}
+          - {kind: text, name: https-label, x: 279, y: 119, w: 104, h: 23, text: "HTTPS 443", size: 11, bold: true, color: "006B5C", align: center}
+          - {kind: arrow, name: endpoint-to-lakehouse, x: 649, y: 149, x2: 796, y2: 149, line: "008577", line_w: 2.5}
+          - {kind: text, name: link-label, x: 690, y: 119, w: 86, h: 23, text: "Private Link", size: 11, bold: true, color: "006B5C", align: center}
+          - {kind: text, name: dns-match, x: 795, y: 214, w: 377, h: 28, text: "DNS 응답·실제 HTTPS 연결 IP가 PE NIC와 일치", size: 11, color: "444444", align: left}
+
+          - {kind: round, name: public-client, x: 42, y: 287, w: 219, h: 79, fill: "F7F7F7", line: "777777", radius: 5}
+          - {kind: text, name: client-label, x: 54, y: 296, w: 195, h: 27, text: "VNet 외부 클라이언트", size: 14, bold: true, color: "171717", align: left}
+          - {kind: text, name: client-detail, x: 54, y: 327, w: 195, h: 24, text: "동일 Entra 계정", size: 12, color: "444444", align: left}
+          - {kind: round, name: public-ingress, x: 796, y: 287, w: 376, h: 79, fill: "FDECEA", line: "C62828", radius: 5}
+          - {kind: text, name: public-ingress-label, x: 809, y: 296, w: 349, h: 27, text: "작업 영역의 공용 접근 정책", size: 15, bold: true, color: "8B2323", align: left}
+          - {kind: text, name: public-result, x: 809, y: 327, w: 349, h: 24, text: "PUT 403 · DeniedByPolicy", size: 12, bold: true, color: "8B2323", align: left}
+          - {kind: arrow, name: blocked-public-request, x: 261, y: 326, x2: 796, y2: 326, line: "C62828", line_w: 2.5, dash: true}
+          - {kind: text, name: public-description, x: 325, y: 296, w: 380, h: 23, text: "공용 HTTPS · 동일 Lakehouse에 쓰기 시도", size: 11, bold: true, color: "8B2323", align: center}
+
+          - {kind: line, name: results-divider, x: 8, y: 419, x2: 1192, y2: 419, line: "FF8C00", line_w: 2}
+          - {kind: text, name: baseline-result, x: 8, y: 435, w: 1184, h: 27, text: "Deny 적용 전: 공용·사설 경로 모두 PUT 201", size: 13, bold: true, color: "1F4E79", align: left}
+          - {kind: text, name: scope-label, x: 8, y: 472, w: 1184, h: 27, text: "OneLake Blob API 직접 적재 · 테넌트 전체 공용 차단은 적용하지 않음", size: 12, color: "444444", align: left}
+    source: "Microsoft Learn — https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-set-up ; https://learn.microsoft.com/fabric/onelake/onelake-manage-inbound-access"
+    notes: |
+      앞에서 본 NAT 검증은 Fabric이 외부 API를 호출하는 송신 시험이었죠. 이번 장표는 방향이 반대입니다. 외부 환경과 VNet에서 Fabric으로 들어오는 요청을 각각 보내 봤어요. 그중 VNet에서 들어오는 요청이 사설 연결로 도착해서 파일을 쓸 수 있는지 확인했습니다.
+
+      왼쪽 파란 상자가 Azure VNet입니다. 공인 IP가 없는 Linux 테스트 VM과 Private Endpoint를 서로 다른 서브넷에 배치했어요. 초록색 Private Endpoint는 Azure 쪽 전용 서브넷에 있고, 오른쪽 Microsoft Fabric은 VNet 밖에 있는 SaaS입니다. 같은 작업 영역의 Blob 주소를 VNet 안에서 조회하면 Private DNS 덕분에 사설 IP가 나와요. 이 응답뿐 아니라 HTTPS 연결의 실제 상대 IP도 승인된 엔드포인트의 NIC 주소와 대조했습니다. Bastion은 VM에 접속할 때만 썼고, OneLake에 요청을 보낸 주체는 VM입니다.
+
+      아래의 빨간 점선은 같은 Entra 계정이 VNet 밖에서 동일한 Lakehouse에 쓰기를 시도한 경로예요. 처음에는 공용과 사설 모두 HTTP 201을 받았습니다. 전용 작업 영역의 인바운드 정책만 Deny로 바꾸자 공용 쓰기는 HTTP 403과 DeniedByPolicy를 받았어요. 이 상태에서도 사설 쓰기는 201, 재읽기는 200이었고 파일의 해시가 원본과 일치했습니다. 테넌트 전체를 막거나 Pipeline으로 우회한 결과가 아니라, 작업 영역의 정책과 Private Link를 함께 검증한 결과입니다.
