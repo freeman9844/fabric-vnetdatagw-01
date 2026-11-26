@@ -1,0 +1,65 @@
+{
+  "dateUtc": "2026-11-25",
+  "region": "West US 3",
+  "capacity": "F2",
+  "source": "Public App Service HTTPS REST through VNet Data Gateway and NAT Gateway",
+  "appServiceAccessRestriction": "Allow the static NAT IPv4 /32 only; deny all other sources",
+  "appServicePrivateEndpointPresentDuringRuns": false,
+  "sink": "Native Lakehouse Files in the same Fabric workspace; no explicit sink gateway connection",
+  "workspaceInboundPolicyDuringRuns": "Deny",
+  "sourceLog": "AppServiceHTTPLogs.CIp, correlated by Pipeline Run ID in the URL",
+  "gatewaySubnetControl": {
+    "fabricPrivateEndpointIps": 6,
+    "nextHopWhenBlocked": "None"
+  },
+  "publicOneLakeWriteBefore": { "http": 403, "error": "DeniedByPolicy" },
+  "publicOneLakeWriteAfter": { "http": 403, "error": "DeniedByPolicy" },
+  "runs": [
+    {
+      "stage": "pe-open",
+      "jobStatus": "Completed",
+      "sourceRequestsWithRunId": 1,
+      "sourceHttp": 200,
+      "sourceIpMatchesStaticNat": true,
+      "privateReadbackHttp": 200,
+      "readbackPeerMatchesPe": true,
+      "validatedPayloadBytes": 262144,
+      "sha256Matches": true
+    },
+    {
+      "stage": "pe-blocked",
+      "jobStatus": "Failed",
+      "sourceRequestsWithRunId": 1,
+      "sourceHttp": 200,
+      "sourceIpMatchesStaticNat": true,
+      "error": "LakehouseForbiddenError",
+      "innerError": "DeniedByPolicy",
+      "privateReadbackHttp": 404,
+      "readbackPeerMatchesPe": true
+    },
+    {
+      "stage": "pe-restored",
+      "jobStatus": "Completed",
+      "sourceRequestsWithRunId": 1,
+      "sourceHttp": 200,
+      "sourceIpMatchesStaticNat": true,
+      "privateReadbackHttp": 200,
+      "readbackPeerMatchesPe": true,
+      "validatedPayloadBytes": 262144,
+      "sha256Matches": true
+    }
+  ],
+  "outcome": "nat-and-fabric-pe-dependency-confirmed",
+  "directPipelineWriteFlowAttributed": false,
+  "cleanup": {
+    "originalWorkspacePolicyRestored": true,
+    "remainingTestRoutes": 0,
+    "sourceConnectionAbsent": true,
+    "gatewayAbsent": true,
+    "workspaceAbsent": true,
+    "temporaryCapacityAbsent": true,
+    "azureResourceGroupAbsent": true,
+    "existingCapacitiesUnchanged": true,
+    "tenantSettingsUnchanged": true
+  }
+}

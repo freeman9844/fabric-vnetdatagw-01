@@ -53,4 +53,22 @@ ARM 감사 로그에서 승인된 Fabric PE IP 6개에 대한 `/32 → None` 라
 
 **정리 확인:** 시험 라우트와 작업 영역 정책을 원복했습니다. Fabric 연결·Gateway·작업 영역은 `404`, 임시 F2와 전용 Azure 그룹은 부재였습니다. 기존 용량과 테넌트 설정은 유지했습니다.
 
-[비식별 결과 JSON](fabric-pipeline-private.json) · [재현 절차](../docs/runbook-pipeline-private.md)
+[비식별 결과 JSON](fabric-pipeline-private.json) · [재현 절차](../docs/runbook-pipeline-private.md) · [당시 장표](../deck/fabric-pipeline-private-v1.pptx)
+
+## Pipeline 결합 검증: NAT와 Fabric Workspace PE
+
+2026-11-25(UTC) West US 3 임시 F2에서 같은 Pipeline을 세 번 실행했습니다. REST 원본은 VNet Data Gateway와 NAT Gateway를 거쳐 **공개 App Service HTTPS**로 접근했습니다. App Service 접근 제한은 NAT의 정적 공인 IPv4 `/32`만 허용했습니다. 초기 게시용 App Service PE와 사설 DNS는 실행 전에 제거했고, VNet에서 앱이 공개 IP로 해석되는 것을 확인했습니다. 적재 대상은 같은 작업 영역의 네이티브 Lakehouse `Files`였으며 별도 대상 Gateway 연결은 없었습니다.
+
+세 실행 내내 `Inbound Deny`를 유지했습니다. 차단 시 VNet Data Gateway 전용 서브넷의 라우트 테이블에 승인된 Fabric PE의 IPv4 주소 6개를 각각 `/32 → None`으로 지정했고, 복구 시 해당 라우트만 제거했습니다. NAT와 App Service 설정은 건드리지 않았습니다.
+
+| Fabric PE 경로 | 실행 ID가 일치하는 `AppServiceHTTPLogs` | OneLake 적재 및 사설 재읽기 |
+|---|---|---|
+| 열림 | `CIp` = NAT IPv4, `200` 1건 | 완료, `GET 200`, 256 KiB SHA-256 일치 |
+| 차단 | `CIp` = NAT IPv4, `200` 1건 | `LakehouseForbiddenError` / `DeniedByPolicy`, `GET 404` |
+| 복구 | `CIp` = NAT IPv4, `200` 1건 | 완료, `GET 200`, 256 KiB SHA-256 일치 |
+
+공용 OneLake 쓰기는 실험 전후 모두 `403 DeniedByPolicy`였고, 사설 재읽기의 HTTPS 연결 IP는 승인된 Fabric PE 주소와 일치했습니다. 원본 호출은 유지됐지만 PE 차단 때만 적재가 실패했으므로 **이 구성에서 적재 성공이 Fabric PE 접근에 의존**함을 확인했습니다. 재읽기의 연결 IP는 Pipeline 쓰기의 전송 경로를 직접 입증하지 않습니다.
+
+**정리 확인:** 원래 작업 영역 정책과 시험 라우트를 원복했습니다. Fabric 연결·Gateway·작업 영역·임시 F2 및 Azure 리소스 그룹의 부재를 확인했고, 기존 용량과 테넌트 설정은 유지했습니다.
+
+[비식별 결과 JSON](fabric-pipeline-nat-workspace-pe.json)
