@@ -29,7 +29,7 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 
 **정리:** 시험 라우트와 작업 영역 정책을 원복했습니다. Fabric 연결·게이트웨이·작업 영역·임시 F2와 Azure 리소스 그룹은 삭제를 확인했습니다. 기존 Fabric 용량과 테넌트 설정은 유지했습니다.
 
-[결합 시나리오 실측 근거](evidence/README.md#pipeline-결합-검증-nat와-fabric-workspace-pe) · [비식별 결과 JSON](evidence/fabric-pipeline-nat-workspace-pe.json)
+[구성도와 실측 장표](#03-pipeline-결합-검증) · [결합 시나리오 실측 근거](evidence/README.md#pipeline-결합-검증-nat와-fabric-workspace-pe) · [비식별 결과 JSON](evidence/fabric-pipeline-nat-workspace-pe.json)
 
 ## 저장소 구성
 
@@ -45,43 +45,53 @@ Microsoft Fabric Pipeline에서 공개 HTTPS API를 호출할 때, API가 보는
 
 ## 장표
 
-[편집 가능한 PowerPoint v2](deck/fabric-nat-design-v2.pptx) · [YAML 원본](deck/fabric-nat-design-v2.yaml) · [발표 노트](deck/fabric-nat-design-v2.script.md) · [전체 미리보기](deck/fabric-nat-design-v2_render/contact_sheet.png)
+[편집 가능한 PowerPoint v3](deck/fabric-nat-design-v3.pptx) · [YAML 원본](deck/fabric-nat-design-v3.yaml) · [발표 노트](deck/fabric-nat-design-v3.script.md) · [전체 미리보기](deck/fabric-nat-design-v3_render/contact_sheet.png)
 
-아래에서 NAT 송신 검증 v2 장표 7장을 순서대로 볼 수 있습니다. 이미지를 클릭하면 원본 크기로 열립니다.
+기존 NAT 송신 검증 7장과 Pipeline 결합 검증 2장을 한 파일에 담았습니다. 이미지를 클릭하면 원본 크기로 열립니다.
 
 ### 1. 검증 샘플 구성
 
 NAT Gateway는 VNet의 위임 서브넷에 연결하는 별도 관리형 리소스입니다. 그림에서는 VNet 경계 안, 위임 서브넷 경계 밖에 배치하고 연결 설정을 주황 점선으로 표시했습니다. 공개 HTTPS Mock API는 VNet 밖에 있습니다.
 
-<a href="deck/fabric-nat-design-v2_render/slide_01.png"><img src="deck/fabric-nat-design-v2_render/slide_01.png" alt="Azure VNet 안에서 위임 서브넷과 연결된 NAT Gateway 및 VNet 밖 App Service의 공개 HTTPS 접근 경로" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_01.png"><img src="deck/fabric-nat-design-v3_render/slide_01.png" alt="Azure VNet 안에서 위임 서브넷과 연결된 NAT Gateway 및 VNet 밖 App Service의 공개 HTTPS 접근 경로" width="960"></a>
 
 ### 01 네트워크 검증
 
 #### 2. 네트워크 검증 섹션
 
-<a href="deck/fabric-nat-design-v2_render/slide_02.png"><img src="deck/fabric-nat-design-v2_render/slide_02.png" alt="네트워크 검증 섹션: 고정 송신 IPv4, /32 접근 제한, 동일 URL 대조군" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_02.png"><img src="deck/fabric-nat-design-v3_render/slide_02.png" alt="네트워크 검증 섹션: 고정 송신 IPv4, /32 접근 제한, 동일 URL 대조군" width="960"></a>
 
 #### 3. 검증 매트릭스
 
-<a href="deck/fabric-nat-design-v2_render/slide_03.png"><img src="deck/fabric-nat-design-v2_render/slide_03.png" alt="허용 요청 두 건과 차단 대조군의 기대 응답과 판정 근거" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_03.png"><img src="deck/fabric-nat-design-v3_render/slide_03.png" alt="허용 요청 두 건과 차단 대조군의 기대 응답과 판정 근거" width="960"></a>
 
 #### 4. 실측 결과
 
-<a href="deck/fabric-nat-design-v2_render/slide_04.png"><img src="deck/fabric-nat-design-v2_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_04.png"><img src="deck/fabric-nat-design-v3_render/slide_04.png" alt="Fabric 두 건의 HTTP 200 및 NAT IPv4 일치, 외부 대조군의 HTTP 403 실측" width="960"></a>
 
 ### 02 재현 및 정리
 
 #### 5. 재현 및 정리 섹션
 
-<a href="deck/fabric-nat-design-v2_render/slide_05.png"><img src="deck/fabric-nat-design-v2_render/slide_05.png" alt="재현 및 정리 섹션: REST Copy 설정, 판정 절차, 별도 승인 정리" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_05.png"><img src="deck/fabric-nat-design-v3_render/slide_05.png" alt="재현 및 정리 섹션: REST Copy 설정, 판정 절차, 별도 승인 정리" width="960"></a>
 
 #### 6. Fabric 재현 설정
 
-<a href="deck/fabric-nat-design-v2_render/slide_06.png"><img src="deck/fabric-nat-design-v2_render/slide_06.png" alt="Fabric 게이트웨이 연결, 단일 호출을 위한 페이지 매김 규칙, 증거 판정 순서" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_06.png"><img src="deck/fabric-nat-design-v3_render/slide_06.png" alt="Fabric 게이트웨이 연결, 단일 호출을 위한 페이지 매김 규칙, 증거 판정 순서" width="960"></a>
 
 #### 7. 검증 범위와 리소스 정리 상태
 
-<a href="deck/fabric-nat-design-v2_render/slide_07.png"><img src="deck/fabric-nat-design-v2_render/slide_07.png" alt="기능 검증 3건 통과와 Fabric 및 Azure의 마지막 리소스 정리 확인 상태" width="960"></a>
+<a href="deck/fabric-nat-design-v3_render/slide_07.png"><img src="deck/fabric-nat-design-v3_render/slide_07.png" alt="기능 검증 3건 통과와 Fabric 및 Azure의 마지막 리소스 정리 확인 상태" width="960"></a>
+
+### 03 Pipeline 결합 검증
+
+#### 8. 공개 App Service와 Fabric Workspace PE 구성
+
+<a href="deck/fabric-nat-design-v3_render/slide_08.png"><img src="deck/fabric-nat-design-v3_render/slide_08.png" alt="VNet Data Gateway의 NAT 경유 공개 App Service 호출과 Fabric Workspace PE 접근에 의존하는 OneLake 적재 구성" width="960"></a>
+
+#### 9. Fabric PE 경로 열림·차단·복구 실측
+
+<a href="deck/fabric-nat-design-v3_render/slide_09.png"><img src="deck/fabric-nat-design-v3_render/slide_09.png" alt="세 실행 모두 App Service에서 NAT IPv4와 HTTP 200을 확인했으며 Fabric PE 경로 차단 시에만 OneLake 적재 실패" width="960"></a>
 
 ## 재현 순서
 

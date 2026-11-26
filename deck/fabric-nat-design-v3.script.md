@@ -1,0 +1,88 @@
+# 발표 스크립트 — Fabric 네트워크 검증 — NAT 송신과 OneLake 적재
+
+9장 · L300 · 예상 11분 45초
+
+## 1. 검증 샘플 구성 — Fabric의 고정 송신 IP
+_1분 38초 · 647자_
+
+안녕하세요. 오늘은 Fabric Pipeline이 외부 HTTPS API를 호출할 때 목적지에서 보는 출발지 주소를 고정할 수 있는지 살펴볼게요. 실제 Azure West US 3에서 작은 구성으로 두 가지를 확인했습니다. 첫째, 정적 공인 IPv4가 수신 로그에 남는지입니다. 둘째, 다른 출발지는 같은 주소에서 거부되는지입니다.
+
+왼쪽의 Fabric은 고객 VNet 밖에 있는 SaaS입니다. 기존 Trial에 만든 전용 작업 영역에서 REST Copy Activity를 실행했어요. 연결을 지정하면 VNet Data Gateway가 Microsoft.PowerPlatform/vnetaccesslinks로 위임된 서브넷에서 HTTPS 요청을 보냅니다. 파란 VNet 경계 안에서 NAT Gateway는 점선 서브넷 경계 바깥에 보이죠. NAT Gateway는 서브넷에 배치한 VM이 아니라, 그 서브넷에 연결한 별도 관리형 리소스이기 때문입니다. 주황 점선은 이 연결 설정이고, 초록 실선은 요청 경로예요. Standard NAT Gateway가 정적 공인 IPv4 한 개로 출발지 주소를 바꿉니다.
+
+오른쪽의 App Service는 VNet 밖의 공개 HTTPS 엔드포인트지만 지정된 NAT 주소만 허용합니다. 응답은 Fabric이 Lakehouse에 적재했고, 요청 수신과 정책 판단은 Log Analytics에서 대조했어요. 빨간 점선은 같은 URL을 호출하되 NAT를 사용하지 않는 대조군입니다. 이 결과만으로 온프레미스 연결이나 처리 성능까지 판단할 수는 없어요. 이제 네트워크 검증에서 어떤 자료를 맞춰 봤는지 순서대로 보겠습니다.
+
+> 출처: Microsoft Learn — https://learn.microsoft.com/data-integration/vnet/data-gateway-architecture ; https://learn.microsoft.com/azure/nat-gateway/nat-overview
+
+## 2. 네트워크 검증
+_24초 · 131자_
+
+앞에서 요청 경로와 정책의 위치를 봤습니다. 이제 네트워크 검증을 보겠습니다. Fabric에서 두 번 요청했고, 그중 먼저 성공한 URL을 외부에서 다시 호출했어요. 응답 코드뿐 아니라 수신 IP와 감사 판정이 함께 맞아야 통과입니다. 먼저 검증 매트릭스에서 각 경우에 어떤 증거를 요구했는지 보겠습니다.
+
+## 3. 검증 매트릭스 — 허용 2회와 차단 대조군
+_1분 28초 · 494자_
+
+방금 말한 네트워크 검증을 표로 펼쳐 봤습니다. 첫 두 줄은 같은 Pipeline에서 별도로 실행한 작업이에요. 각 실행에는 고유한 프로브 경로를 부여했기 때문에 HTTP 로그에서 어떤 요청이 어느 실행인지 구분할 수 있습니다. 둘 다 완료돼 응답이 Lakehouse에 적재되어야 하고, 경로에 해당하는 수신 로그가 NAT 주소에서 온 이백 응답이어야 합니다. 같은 구간의 접근 감사에도 허용 기록이 있어야 하죠.
+
+세 번째 줄에서는 새 경로를 만드는 대신 첫 실행과 똑같은 URL을 사용했어요. 그래야 잘못된 URL이거나 Mock 서버에 그 경로가 없어서 실패했다는 설명을 배제할 수 있습니다. 이때 출발지만 NAT를 거치지 않는 별도 IPv4로 바꿨어요. 클라이언트가 사백삼을 받고, 감사 로그의 거부 출발지도 NAT 주소와 달라야 통과입니다.
+
+아래 세 항목을 보시면 자료를 연결하는 기준이 나와 있죠. 호스트는 동일해야 하고, HTTP 로그는 경로까지 맞춰야 하며, 각각의 UTC 시간창은 겹치면 안 됩니다. 감사 로그에는 프로브 경로가 없어서 이 시간창이 특히 중요해요. 출발지를 해석할 때는 요청자가 넣을 수 있는 헤더가 아니라 App Service가 기록한 CIp를 사용했습니다. 다음 장에서 실제 관측값이 이 매트릭스와 어떻게 맞았는지 보겠습니다.
+
+## 4. 실측 결과 — NAT IPv4 일치와 동일 URL 차단
+_1분 35초 · 514자_
+
+앞에서 정의한 매트릭스에 실제 관측값을 넣으면 이렇게 됩니다. 날짜는 이천이십육 년 십일 월 이십 일이고 리전은 West US 3입니다. 표의 시각은 UTC입니다. 첫 번째 요청은 여덟 시 이십 분 삼십삼 초, 두 번째 요청은 여덟 시 이십일 분 삼십일 초에 수신됐습니다. 둘 다 이백 응답을 받았고 기록된 출발지와 고정 NAT 주소가 정확히 일치했어요. 두 Fabric 실행도 각각 완료됐고 Lakehouse 안의 프로브 식별자를 실행별로 대조했습니다.
+
+세 번째 줄은 여덟 시 이십이 분 이십팔 초에 기록된 접근 감사 결과입니다. 같은 URL을 별도 출발지에서 요청했을 때 클라이언트가 사백삼을 받았고, 감사 로그에도 실제로 NAT와 다른 주소가 거부된 것으로 남았어요. 앞 두 줄과 달리 이 줄의 시각은 HTTP 수신 로그가 아니라 IP 감사 로그에서 가져온 값입니다. 이 차이를 구분해야 로그가 생성되는 위치를 혼동하지 않겠죠.
+
+아래의 두 카드처럼 최종 두 허용 실행과 한 차단 대조군이 모두 통과했습니다. 원본 증거를 판정기에 넣어 종료 코드도 영으로 확인했어요. 겹치지 않는 시간창을 사용했기 때문에 같은 주소에 보낸 두 요청을 섞지 않았습니다. 실제 주소를 공개하지 않아도 세 관측의 일치와 불일치 관계는 확인할 수 있습니다. 이제 재현 및 정리로 넘어가, 첫 진단 실행이 왜 최종 집계에 들어가지 않았는지부터 보겠습니다.
+
+> 출처: 공개 실측 요약 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/README.md
+
+## 5. 재현 및 정리
+_23초 · 126자_
+
+앞에서 실측 결과 세 건이 어떻게 판정됐는지 봤습니다. 이제 재현 및 정리 관점으로 전환할게요. 먼저 REST 연결과 페이지 매김 설정을 살펴보고, 실제 실행에서 어떤 시행착오가 있었는지 확인하겠습니다. 마지막으로 이번 검증이 입증한 범위와 Azure 리소스 정리 상태를 구분해서 보겠습니다.
+
+## 6. 재현 설정 — 게이트웨이 연결과 단일 요청
+_1분 31초 · 555자_
+
+이제 재현 설정을 보겠습니다. 가장 먼저 확인할 것은 REST 연결의 종류예요. 연결이 VirtualNetworkGateway를 가리켜야 이번과 같은 송신 경로를 시험할 수 있습니다. 이 PoC의 게이트웨이에서 지원된 방식은 RestService.Contents였고, baseUrl에는 HTTPS 주소를 지정했어요. 모의 API는 실제 업무 데이터를 받지 않으므로 익명 연결을 사용했지만, 출발지 제한은 App Service에서 따로 걸었습니다.
+
+왼쪽 코드에 있는 두 규칙은 요청 횟수를 통제하기 위한 설정입니다. 처음에는 supportRFC5988을 false로만 두면 될 것으로 봤는데, 진단 실행이 같은 URL을 반복 호출했어요. 따라서 MaxRequestNumber를 일로 제한하고 응답의 ok 속성이 존재하면 종료하도록 구성했습니다. 최초 진단을 취소한 뒤 별개의 실행 두 건으로 최종 증거를 다시 모았죠.
+
+오른쪽은 수행 순서입니다. 먼저 Bicep 미리보기에서 새 PoC 그룹 외에 변경이 없는지 보고 승인 후 배포합니다. 다음으로 Fabric 실행과 적재를 확인하고, 그중 한 URL을 외부에서 호출합니다. 마지막으로 HTTP 로그와 IP 감사 로그를 짧은 시간창으로 대조해 판정기를 실행합니다. 화면의 코드는 요청에 필요한 일부 설정이고, 전체 배포 명령은 실행 안내에 있습니다. 다음 장에서 이 송신 검증의 범위와 정리 상태를 확인하겠습니다.
+
+> 출처: Microsoft Learn — https://learn.microsoft.com/fabric/data-factory/connector-rest-copy-activity ; https://learn.microsoft.com/rest/api/fabric/core/connections/list-supported-connection-types
+
+## 7. 결과 정리 — 검증 범위와 리소스 상태
+_1분 29초 · 531자_
+
+앞에서 재현에 필요한 설정과 확인 순서를 봤습니다. 정리하면 세 가지를 기억하시면 됩니다. 먼저 이 구성에서는 Fabric이 VNet Data Gateway를 사용해 요청했을 때 수신 측에서 NAT의 정적 주소를 확인했습니다. 다음으로 같은 URL도 NAT를 사용하지 않는 출발지에서는 거부됐어요. 단순히 응답이 돌아왔다는 사실보다 강한 근거가 되는 이유는, 각 요청이 어떤 IP에서 들어왔고 정책에서 어떻게 평가됐는지 별도로 확인했기 때문입니다.
+
+마지막으로 기능 검증과 자원 삭제는 나눠 봐야 합니다. Fabric에서 새로 만든 연결, 게이트웨이, 작업 영역은 조회 시 사백사였고 기존 Trial은 활성 상태였어요. Azure 리소스 그룹은 초기 조회에서 위임 서브넷의 PowerPlatformSAL이 남아 바로 사라지지 않았습니다. 이후 십일 월 이십오 일에 ARM에서 승인된 그룹을 다시 조회해 부재를 확인했어요. 화면의 정리 행은 이 최신 재조회 결과입니다.
+
+검증을 운영 구성에 적용한다면 고객 API가 보는 출발지와 방화벽 정책을 실제 고객 경로에서 다시 확인해야 합니다. 이 송신 검증만으로 처리량이나 장애 복구 동작은 판단하지 않았어요. 이제 별도 F2 환경에서 공개 App Service 호출과 Fabric Workspace Private Endpoint의 적재 의존성을 함께 확인한 구성을 보겠습니다.
+
+> 출처: Microsoft Learn — https://learn.microsoft.com/data-integration/vnet/data-gateway-faqs ; 공개 실측 요약 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/README.md
+
+## 8. Pipeline 결합 검증 — 공개 원본은 NAT로 호출하고 OneLake 적재는 Fabric PE로 검증
+_1분 39초 · 634자_
+
+앞에서 외부 API가 NAT의 고정 주소를 보는지 확인했죠. 이제 같은 송신 방식으로 읽어 온 데이터가 공용 인바운드를 거부한 OneLake에 적재되는지 보겠습니다. 기존 Trial 실험에 리소스를 덧붙인 것은 아니고, West US 3의 별도 F2 작업 영역에서 이 조합을 검증했어요. 같은 작업 영역의 Pipeline과 Lakehouse를 그림 양쪽에 나눠 표시했지만 둘 다 고객 VNet 밖의 Fabric 서비스입니다.
+
+왼쪽의 REST Copy Activity는 파란 네트워크 경계 안쪽에 있는 VNet Data Gateway 연결을 사용합니다. 위쪽 주황 실선은 공개 HTTPS 원본 요청이에요. 위임 서브넷에 연결된 NAT Gateway가 정적 공인 IPv4로 송신하고, 공개 App Service는 그 주소 하나만 허용합니다. 앱 게시용 사설 엔드포인트는 실험 전에 없앴어요. App Service 응답은 새 연결로 Fabric에 들어오는 게 아니라, 이미 열린 HTTPS 연결에서 NAT를 거쳐 Gateway로 돌아옵니다.
+
+초록 점선은 적재 쪽을 검증한 방법이에요. 같은 작업 영역의 기본 Lakehouse Files를 대상으로 삼았고, 별도의 대상 Gateway 연결은 설정하지 않았습니다. 아래의 별도 서브넷에는 Fabric Workspace Private Endpoint가 있어요. 승인된 사설 주소 여섯 개의 도달성만 Gateway 서브넷에서 끊었다가 복구했습니다. 점선이 실제 쓰기 패킷의 경로를 직접 포착했다는 뜻은 아니에요. 이제 다음 장에서 원본 응답과 OneLake 결과가 각각 어떻게 바뀌었는지 확인하겠습니다.
+
+> 출처: Microsoft Learn — https://learn.microsoft.com/azure/nat-gateway/nat-overview ; https://learn.microsoft.com/azure/app-service/app-service-ip-restrictions ; https://learn.microsoft.com/fabric/security/security-workspace-level-private-links-support
+
+## 9. Pipeline 결합 검증 — Fabric PE만 차단하면 공개 원본 호출은 유지되고 적재만 실패
+_1분 38초 · 585자_
+
+방금 본 결합 구성에서 같은 Pipeline을 세 번 실행했습니다. 모든 실행에서 작업 영역의 Inbound Deny를 유지했어요. 왼쪽에서 오른쪽으로 보면 바뀐 것은 Fabric Private Endpoint로 가는 경로뿐입니다. 가운데 열은 App Service 플랫폼의 CIp를 기록한 HTTP 로그입니다. 실행 ID가 들어간 URL로 대조했더니 각 실행의 요청이 한 건씩 있었고, 모두 같은 NAT IPv4에서 들어와 이백을 반환했어요.
+
+첫 실행은 경로를 열어 둔 상태라 Copy가 완료됐습니다. 두 번째에서는 Gateway 서브넷에서 승인된 PE 주소만 차단했어요. 원본은 여전히 성공했지만 적재가 DeniedByPolicy로 실패했고, 사설 재읽기에서도 파일이 없었습니다. 세 번째에서는 그 라우트만 제거했어요. 다시 적재가 완료됐고, 첫 번째와 세 번째 모두 파일에 들어간 합성 데이터 이백오십육 키비바이트를 원본과 해시로 대조했습니다.
+
+화면 아래를 보시면 공용 쓰기는 실험 전후 모두 사백삼이었죠. 그래서 이 구성에서는 원본을 읽었다는 사실과 적재에 Fabric PE 접근이 필요했다는 사실을 구분할 수 있습니다. 사설 재읽기는 승인된 PE에서 확인했지만, 그걸로 Pipeline의 쓰기 바이트를 추적한 것은 아니에요. 마지막으로 정책과 시험 라우트를 원복하고 임시 Azure와 Fabric 리소스가 삭제된 것을 확인했습니다. 오늘의 결론은 두 구간을 따로 확인해야 고정 송신과 적재 의존성을 구분할 수 있다는 점입니다.
+
+> 출처: 비식별 실측 증적 — https://github.com/freeman9844/fabric-vnetdatagw-01/blob/main/evidence/fabric-pipeline-nat-workspace-pe.json
